@@ -53,6 +53,7 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(true);
   const [cartOpen, setCartOpen] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
+  const [categoryAllProducts, setCategoryAllProducts] = useState<Product[]>([]);
 
   const { totalItems } = useCart();
 
@@ -89,9 +90,12 @@ export default function Home() {
     try {
       const data = await fetchByCategory(cat);
       const products: Product[] = data.products || [];
-      setTotalCount(data.count || 0);
-      setAllProducts(products);
-      setHasMore(false);
+      setCategoryAllProducts(products);
+      setTotalCount(products.length);
+      // Set initial displayed products
+      const initialProducts = products.slice(0, PAGE_SIZE);
+      setAllProducts(initialProducts);
+      setHasMore(products.length > PAGE_SIZE);
     } catch (err) {
       console.error(err);
     }
@@ -137,6 +141,17 @@ export default function Home() {
     };
     run();
   }, [mode, category, loadCategory]);
+
+  // ─── Effect: category pagination ──────────────────────────────────────
+
+  useEffect(() => {
+    if (mode !== "category" || categoryAllProducts.length === 0) return;
+    const start = (page - 1) * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+    const paginatedProducts = categoryAllProducts.slice(start, end);
+    setAllProducts(paginatedProducts);
+    setHasMore(end < categoryAllProducts.length);
+  }, [mode, page, categoryAllProducts]);
 
   // ─── Effect: apply sort to displayed ──────────────────────────────────────
 
@@ -274,7 +289,7 @@ export default function Home() {
         <ProductGrid products={displayed} loading={loading} />
 
         {/* ── Load More ─────────────────────────────────────────────────── */}
-        {mode === "default" && !loading && (
+        {(mode === "default" || mode === "category") && !loading && (
           <LoadMoreButton
             onClick={handleLoadMore}
             loading={loadingMore}

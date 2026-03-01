@@ -9,6 +9,8 @@ export default function LoadMoreButton({
   loading = false,
   hasMore = true,
 }: LoadMoreButtonProps) {
+  if (!hasMore) return null;
+
   return (
     <div className="flex justify-center py-10">
       <button
